@@ -26,29 +26,64 @@ THE SOFTWARE.*/
 package iptoloc
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"os"
 )
 
-//APIEndpoint - A constant which contains the API URL.
+//{"as":"AS14907 Wikimedia Foundation Inc.","city":"San Francisco","country":"United States","countryCode":"US","isp":"Wikimedia Foundation",
+//"lat":37.7898,"lon":-122.3942,"org":"Wikimedia Foundation","query":"208.80.152.201","region":"CA","regionName":"California","status":"success",
+//"timezone":"America/Los_Angeles","zip":"94105"}
+
+//APIEndpoint - contains the API URL.
 const (
-	APIEndpoint = "http://ip-api.com/"
+	APIEndpoint = "http://ip-api.com/json/"
 )
 
-//GetLoc - Takes an IP Address and returns the Geo Location of it.
+//GeoResponse - To capture the response from the APIEndpoint
+type GeoResponse struct {
+	AS          string  `json:"as"`
+	City        string  `json:"city"`
+	Country     string  `json:"country"`
+	CountryCode string  `json:"countryCode"`
+	ISP         string  `json:"isp"`
+	Lat         float64 `json:"lat"`
+	Lon         float64 `json:"lon"`
+	Org         string  `json:"org"`
+	Query       string  `json:"query"`
+	Region      string  `json:"region"`
+	RegionName  string  `json:"regionName"`
+	Status      string  `json:"status"`
+	Timezone    string  `json:"timezone"`
+	Zip         string  `json:"zip"`
+}
+
+//GetLoc - Takes an IP Address and returns a string, which contains City and Country
 func GetLoc(ipaddr string) string {
-	fmt.Println(ipaddr)
 	if isValidIP(ipaddr) {
 		resp, err := http.Get(APIEndpoint + ipaddr)
-		defer resp.Body.Close()
 		if err != nil {
 			fmt.Println("Something wrong with contacting the API")
 			os.Exit(1)
 		}
-		fmt.Println(resp)
-
+		resp2, readerr := ioutil.ReadAll(resp.Body)
+		if readerr != nil {
+			fmt.Println("Something wrong with reading the response")
+			os.Exit(1)
+		}
+		var res GeoResponse
+		jsonerr := json.Unmarshal(resp2, &res)
+		if jsonerr != nil {
+			fmt.Println("Something wrong with unmarshalling the response")
+			os.Exit(1)
+		}
+		if res.City == "" && res.Country == "" {
+			return "<unknown-IP>"
+		}
+		return res.City + ", " + res.Country
 	}
 	return "Invalid IP Address"
 }

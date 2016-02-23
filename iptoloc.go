@@ -84,7 +84,7 @@ func GetLoc(ipaddr string) string {
 	return "Invalid IP Address"
 }
 
-//isValidIP - Takes a IP Address as string and returns true if it valid or false otherwise
+//isValidIP - Takes a IP Address as string and returns true if it is valid or false otherwise
 func isValidIP(ipaddr string) bool {
 	//net.ParseIP returns nil if the parsed IP is not valid
 	ip := net.ParseIP(ipaddr)
